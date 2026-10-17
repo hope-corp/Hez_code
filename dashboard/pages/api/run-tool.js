@@ -1,5 +1,4 @@
 import { exec } from 'child_process';
-import path from 'path';
 import fs from 'fs';
 
 export default function handler(req, res) {
@@ -21,28 +20,32 @@ export default function handler(req, res) {
     return res.status(400).json({ success: false, error: 'Invalid tool selected.' });
   }
 
-  // Since Next.js runs in /app/dashboard, go up one level (../) to find root tools/
-  const targetScript = path.resolve(process.cwd(), '../tools', fileName);
+  // Dynamically search the entire container filesystem for the script file
+  exec(`find / -name "${fileName}" 2>/dev/null`, (findErr, stdout) => {
+    const foundPaths = stdout.trim().split('\n').filter(Boolean);
+    const targetScript = foundPaths[0];
 
-  if (!fs.existsSync(targetScript)) {
-    return res.authCode?.() || res.status(404).json({ 
-      success: false, 
-      error: `Script file '${fileName}' not found at: ${targetScript}` 
-    });
-  }
-
-  exec(`python3 "${targetScript}"`, (error, stdout, stderr) => {
-    if (error) {
-      return res.status(500).json({ 
+    if (!targetScript || !fs.existsSync(targetScript)) {
+      return res.status(404).json({ 
         success: false, 
-        error: error.message, 
-        stderr: stderr 
+        error: `Could not find '${fileName}' anywhere in the container. Check if a .dockerignore file is excluding your tools/ folder.` 
       });
     }
 
-    return res.status(200).json({ 
-      success: true, 
-      output: stdout || stderr 
+    // Execute the dynamically located script using python3
+    exec(`python3 "${targetScript}"`, (execErr, stdoutExec, stderrExec) => {
+      if (execErr) {
+        return res.status(500).json({ 
+          success: false, 
+          error: execErr.message, 
+          stderr: stderrExec 
+        });
+      }
+
+      return res.status(200).json({ 
+        success: true, 
+        output: stdoutExec || stderrExec 
+      });
     });
   });
 }
