@@ -20,12 +20,9 @@ export default function Home() {
       
       if (data.success) {
         let terminalText = data.output || 'Tool executed successfully with no output.';
-        
-        // Catch and display contents of sk_keys.txt if the backend sent them
         if (data.savedKeys) {
           terminalText += `\n\n--- Contents of sk_keys.txt ---\n${data.savedKeys}`;
         }
-        
         setOutput(terminalText);
       } else {
         setOutput(`Error: ${data.error}\n${data.stderr || ''}`);
@@ -37,11 +34,32 @@ export default function Home() {
     }
   };
 
-  const handleGenerateTool = (e) => {
+  const handleGenerateTool = async (e) => {
     e.preventDefault();
     if (!toolPrompt.trim()) return;
-    setOutput(`Generating new tool based on prompt: "${toolPrompt}"...\n(AI generation feature ready for wiring!)`);
-    setToolPrompt('');
+
+    setLoading(true);
+    setOutput(`Generating new tool for: "${toolPrompt}"...`);
+
+    try {
+      const res = await fetch('/api/generate-tool', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: toolPrompt })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setOutput(`[SUCCESS] ${data.message}\nSaved at: ${data.path}`);
+      } else {
+        setOutput(`Error generating tool: ${data.error}`);
+      }
+    } catch (err) {
+      setOutput(`Failed to communicate with generator API: ${err.message}`);
+    } finally {
+      setLoading(false);
+      setToolPrompt('');
+    }
   };
 
   return (
@@ -115,7 +133,7 @@ export default function Home() {
         {/* Real-time Output Terminal */}
         <div className="bg-black border border-gray-700 p-4 rounded-lg font-mono text-sm">
           <div className="text-gray-500 mb-2 border-b border-gray-800 pb-1">Execution Terminal Output:</div>
-          <pre className="whitespace-pre-wrap text-green-400">{loading ? 'Running...' : output}</pre>
+          <pre className="whitespace-pre-wrap text-green-400">{loading ? 'Processing...' : output}</pre>
         </div>
       </main>
     </div>
