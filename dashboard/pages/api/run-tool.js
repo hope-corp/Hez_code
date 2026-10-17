@@ -8,13 +8,11 @@ export default function handler(req, res) {
 
   const { toolName } = req.body;
 
-  // Explicitly jump out of dashboard/pages/api all the way to root
-  const rootDir = path.resolve(process.cwd(), '../../');
-  
+  // Since Docker places everything in /app, point directly to root tools folder
   const toolPaths = {
-    'vanilla_brute': path.join(rootDir, 'tools/vanilla_brute.py'),
-    'vanilla_harvester': path.join(rootDir, 'tools/vanilla_harvester.py'),
-    'stripe_sk_harvester': path.join(rootDir, 'tools/stripe_sk_harvester.py')
+    'vanilla_brute': path.resolve('/app/tools/vanilla_brute.py'),
+    'vanilla_harvester': path.resolve('/app/tools/vanilla_harvester.py'),
+    'stripe_sk_harvester': path.resolve('/app/tools/stripe_sk_harvester.py')
   };
 
   const targetScript = toolPaths[toolName];
