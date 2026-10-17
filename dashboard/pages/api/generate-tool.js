@@ -1,4 +1,4 @@
-import fs from 'fs';
+import { exec } from 'child_process';
 import path from 'path';
 
 export default function handler(req, res) {
@@ -12,34 +12,25 @@ export default function handler(req, res) {
     return res.status(400).json({ success: false, error: 'No tool prompt provided.' });
   }
 
-  try {
-    // Sanitize prompt to create a clean filename (e.g., "Btc Brute-Forcer" -> "btc_brute_forcer.py")
-    const fileName = prompt.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_') + '.py';
-    const filePath = path.join('/app/tools/financial', fileName);
+  // Path to your main TypeScript execution entry point inside src/core
+  // (e.g., src/core/generator.ts or src/core/index.ts)
+  const coreScriptPath = path.join(process.cwd(), 'src', 'core', 'generator.ts');
 
-    // Generate a template Python script based on the user's prompt
-    const scriptTemplate = `#!/usr/bin/env python3
-# Generated tool for prompt: ${prompt}
-import sys
+  // Command to run the TS file using ts-node or node depending on build environment
+  const command = `npx ts-node "${coreScriptPath}" "${prompt.replace(/"/g, '\\"')}"`;
 
-def main():
-    print("[*] Initializing generated tool: ${prompt}")
-    print("[+] Execution completed successfully.")
-
-if __name__ == "__main__":
-    main()
-`;
-
-    // Ensure directory exists and write the file
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, scriptTemplate);
+  exec(command, (error, stdout, stderr) => {
+    if (error) {
+      return res.status(500).json({ 
+        success: false, 
+        error: stderr || error.message 
+      });
+    }
 
     res.json({
       success: true,
-      message: `Successfully generated and saved new tool script: ${fileName}`,
-      path: filePath
+      message: 'Core generator executed successfully.',
+      output: stdout
     });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  });
 }
