@@ -8,11 +8,11 @@ export default function handler(req, res) {
 
   const { toolName } = req.body;
 
-  // Map requested tools to their actual paths relative to the dashboard directory
+  // Points correctly from dashboard/pages/api to root tools/ folder
   const toolPaths = {
-    'vanilla_brute': path.join(process.cwd(), '../tools/vanilla_brute.py'),
-    'vanilla_harvester': path.join(process.cwd(), '../tools/vanilla_harvester.py'),
-    'stripe_sk_harvester': path.join(process.cwd(), '../tools/stripe_sk_harvester.py')
+    'vanilla_brute': path.resolve(process.cwd(), '../tools/vanilla_brute.py'),
+    'vanilla_harvester': path.resolve(process.cwd(), '../tools/vanilla_harvester.py'),
+    'stripe_sk_harvester': path.resolve(process.cwd(), '../tools/stripe_sk_harvester.py')
   };
 
   const targetScript = toolPaths[toolName];
@@ -21,6 +21,7 @@ export default function handler(req, res) {
     return res.status(400).json({ error: 'Invalid tool selected or path not found.' });
   }
 
+  // Use python3 (once installed via nixpacks)
   exec(`python3 "${targetScript}"`, (error, stdout, stderr) => {
     if (error) {
       return res.status(500).json({ 
