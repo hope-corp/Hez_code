@@ -21,36 +21,13 @@ export default function handler(req, res) {
     return res.status(400).json({ success: false, error: 'Invalid tool selected.' });
   }
 
-  // Check all possible locations inside the container environment
-  const possiblePaths = [
-    path.resolve('/app/tools', fileName),
-    path.resolve('/app/Hez_code/tools', fileName),
-    path.resolve(process.cwd(), 'tools', fileName),
-    path.resolve(process.cwd(), '../tools', fileName)
-  ];
+  // Since Next.js runs in /app/dashboard, go up one level (../) to find root tools/
+  const targetScript = path.resolve(process.cwd(), '../tools', fileName);
 
-  let targetScript = null;
-  for (const p of possiblePaths) {
-    if (fs.existsSync(p)) {
-      targetScript = p;
-      break;
-    }
-  }
-
-  if (!targetScript) {
-    let foundFiles = [];
-    try {
-      const toolsDir = path.resolve('/app/tools');
-      if (fs.existsSync(toolsDir)) {
-        foundFiles = fs.readdirSync(toolsDir);
-      }
-    } catch (e) {}
-
-    return res.status(404).json({ 
+  if (!fs.existsSync(targetScript)) {
+    return res.authCode?.() || res.status(404).json({ 
       success: false, 
-      error: `Could not find script file '${fileName}'.`,
-      availableFilesInTools: foundFiles,
-      searchedPaths: possiblePaths
+      error: `Script file '${fileName}' not found at: ${targetScript}` 
     });
   }
 
