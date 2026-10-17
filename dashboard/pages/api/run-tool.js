@@ -8,11 +8,13 @@ export default function handler(req, res) {
 
   const { toolName } = req.body;
 
-  // Correctly climbs out of dashboard/pages/api to reach the root tools/ folder
+  // Explicitly jump out of dashboard/pages/api all the way to root
+  const rootDir = path.resolve(process.cwd(), '../../');
+  
   const toolPaths = {
-    'vanilla_brute': path.resolve(process.cwd(), '../../tools/vanilla_brute.py'),
-    'vanilla_harvester': path.resolve(process.cwd(), '../../tools/vanilla_harvester.py'),
-    'stripe_sk_harvester': path.resolve(process.cwd(), '../../tools/stripe_sk_harvester.py')
+    'vanilla_brute': path.join(rootDir, 'tools/vanilla_brute.py'),
+    'vanilla_harvester': path.join(rootDir, 'tools/vanilla_harvester.py'),
+    'stripe_sk_harvester': path.join(rootDir, 'tools/stripe_sk_harvester.py')
   };
 
   const targetScript = toolPaths[toolName];
