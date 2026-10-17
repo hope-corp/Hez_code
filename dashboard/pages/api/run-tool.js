@@ -1,5 +1,6 @@
 import { exec } from 'child_process';
 import path from 'path';
+import fs from 'fs';
 
 export default function handler(req, res) {
   if (req.method !== 'POST') {
@@ -8,20 +9,35 @@ export default function handler(req, res) {
 
   const { toolName } = req.body;
 
-  const rootDir = path.resolve(process.cwd(), '../');
-  const toolPaths = {
-    'vanilla_brute': path.join(rootDir, 'tools/vanilla_brute.py'),
-    'vanilla_harvester': path.join(rootDir, 'tools/vanilla_harvester.py'),
-    'stripe_sk_harvester': path.join(rootDir, 'tools/stripe_sk_harvester.py')
-  };
+  // Possible locations where your python files might live inside /app
+  const possibleDirs = [
+    path.resolve('/app/tools'),
+    path.resolve('/app/src'),
+    path.resolve(process.cwd(), '../tools'),
+    path.resolve(process.cwd(), '../src')
+  ];
 
-  const targetScript = toolPaths[toolName];
+  let targetScript = null;
 
-  if (!targetScript) {
-    return res.status(400).json({ error: 'Invalid tool selected or path not found.' });
+  // Search for the requested tool file dynamically
+  for (const dir of possibleDirs) {
+    const filePath = path.join(dir, `${toolName}.py`);
+    if (fs.existsSync(filePath)) {
+      targetScript = filePath;
+      break;
+    }
   }
 
-  // This will now find python3 because railpack.toml explicitly installs it
+  if (!targetScript) {
+    // Debug: list contents of directories to help identify exact paths
+    let debugInfo = "Tried paths in: \n" + possibleDirs.join('\n');
+    return res.status(404).json({ 
+      success: false, 
+      error: `Script for '${toolName}' not found.`,
+      stderr: debugInfo 
+    });
+  }
+
   exec(`python3 "${targetScript}"`, (error, stdout, stderr) => {
     if (error) {
       return res.status(500).json({ 
