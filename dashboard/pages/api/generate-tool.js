@@ -12,10 +12,8 @@ export default function handler(req, res) {
     return res.status(400).json({ success: false, error: 'No tool prompt provided.' });
   }
 
-  // Path to src/core/agent.ts relative to the dashboard directory
   const coreScriptPath = path.resolve(process.cwd(), '..', 'src', 'core', 'agent.ts');
   const safePrompt = prompt.replace(/"/g, '\\"');
-  
   const command = `npx ts-node "${coreScriptPath}" "${safePrompt}"`;
 
   exec(command, (error, stdout, stderr) => {
@@ -28,8 +26,7 @@ export default function handler(req, res) {
 
     res.json({
       success: true,
-      message: 'Agent module executed successfully.',
-      output: stdout
+      output: stdout || stderr || 'Agent executed successfully.'
     });
   });
 }
