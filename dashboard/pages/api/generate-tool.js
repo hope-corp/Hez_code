@@ -12,12 +12,12 @@ export default function handler(req, res) {
     return res.status(400).json({ success: false, error: 'No tool prompt provided.' });
   }
 
-  // Path to your main TypeScript execution entry point inside src/core
-  // (e.g., src/core/generator.ts or src/core/index.ts)
-  const coreScriptPath = path.join(process.cwd(), 'src', 'core', 'generator.ts');
+  // Point directly to agent.ts inside src/core
+  const coreScriptPath = path.join(process.cwd(), 'src', 'core', 'agent.ts');
 
-  // Command to run the TS file using ts-node or node depending on build environment
-  const command = `npx ts-node "${coreScriptPath}" "${prompt.replace(/"/g, '\\"')}"`;
+  // Escape quotation marks in user prompt to safely pass as CLI argument
+  const safePrompt = prompt.replace(/"/g, '\\"');
+  const command = `npx ts-node "${coreScriptPath}" "${safePrompt}"`;
 
   exec(command, (error, stdout, stderr) => {
     if (error) {
@@ -29,7 +29,7 @@ export default function handler(req, res) {
 
     res.json({
       success: true,
-      message: 'Core generator executed successfully.',
+      message: 'Agent module executed successfully.',
       output: stdout
     });
   });
