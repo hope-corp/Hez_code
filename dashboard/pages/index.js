@@ -4,6 +4,7 @@ import { useState } from 'react'
 export default function Home() {
   const [output, setOutput] = useState('Select a tool to execute...');
   const [loading, setLoading] = useState(false);
+  const [toolPrompt, setToolPrompt] = useState('');
 
   const runTool = async (toolName) => {
     setLoading(true);
@@ -29,6 +30,13 @@ export default function Home() {
     }
   };
 
+  const handleGenerateTool = (e) => {
+    e.preventDefault();
+    if (!toolPrompt.trim()) return;
+    setOutput(`Generating new tool based on prompt: "${toolPrompt}"...\n(AI generation feature ready for wiring!)`);
+    setToolPrompt('');
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
       <Head>
@@ -37,7 +45,8 @@ export default function Home() {
       <main className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold mb-8">Hez_code Dashboard</h1>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {/* Vanilla Visa Tools */}
           <div className="bg-gray-800 p-6 rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Vanilla Visa Tools</h2>
             <ul className="space-y-3">
@@ -60,6 +69,7 @@ export default function Home() {
             </ul>
           </div>
 
+          {/* Stripe Tools */}
           <div className="bg-gray-800 p-6 rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Stripe Tools</h2>
             <ul className="space-y-3">
@@ -72,6 +82,26 @@ export default function Home() {
                 </button>
               </li>
             </ul>
+          </div>
+
+          {/* Generate New Tool Form */}
+          <div className="bg-gray-800 p-6 rounded-lg md:col-span-2 lg:col-span-1">
+            <h2 className="text-2xl font-semibold mb-4">Generate New Tool</h2>
+            <form onSubmit={handleGenerateTool} className="space-y-4">
+              <input 
+                type="text" 
+                value={toolPrompt}
+                onChange={(e) => setToolPrompt(e.target.value)}
+                placeholder="Describe your tool..." 
+                className="w-full p-2 bg-gray-700 rounded text-white border border-gray-600 focus:outline-none focus:border-blue-500" 
+              />
+              <button 
+                type="submit" 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded font-medium transition"
+              >
+                Generate
+              </button>
+            </form>
           </div>
         </div>
 
