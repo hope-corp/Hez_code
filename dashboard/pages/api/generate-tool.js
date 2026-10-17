@@ -12,8 +12,8 @@ export default function handler(req, res) {
     return res.status(400).json({ success: false, error: 'No tool prompt provided.' });
   }
 
-  // Point directly to agent.ts inside src/core
-  const coreScriptPath = path.join(process.cwd(), 'src', 'core', 'agent.ts');
+  // Navigate up one directory from 'dashboard' to reach root '/app/src/core/agent.ts'
+  const coreScriptPath = path.resolve(process.cwd(), '..', 'src', 'core', 'agent.ts');
 
   // Escape quotation marks in user prompt to safely pass as CLI argument
   const safePrompt = prompt.replace(/"/g, '\\"');
