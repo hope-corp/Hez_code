@@ -9,32 +9,20 @@ export default function handler(req, res) {
 
   const { toolName } = req.body;
 
-  // Possible locations where your python files might live inside /app
-  const possibleDirs = [
-    path.resolve('/app/tools'),
-    path.resolve('/app/src'),
-    path.resolve(process.cwd(), '../tools'),
-    path.resolve(process.cwd(), '../src')
-  ];
+  // Map frontend identifiers directly to the actual script filenames in /app/tools/
+  const scriptFiles = {
+    'vanilla_brute': 'vanilla_brute.py',
+    'vanilla_harvester': 'vanilla_harvester.py',
+    'stripe_sk_harvester': 'stripe_sk_harvester.py' // Update this string if your actual file has a different name
+  };
 
-  let targetScript = null;
+  const fileName = scriptFiles[toolName];
+  const targetScript = path.resolve('/app/tools', fileName || '');
 
-  // Search for the requested tool file dynamically
-  for (const dir of possibleDirs) {
-    const filePath = path.join(dir, `${toolName}.py`);
-    if (fs.existsSync(filePath)) {
-      targetScript = filePath;
-      break;
-    }
-  }
-
-  if (!targetScript) {
-    // Debug: list contents of directories to help identify exact paths
-    let debugInfo = "Tried paths in: \n" + possibleDirs.join('\n');
+  if (!fileName || !fs.existsSync(targetScript)) {
     return res.status(404).json({ 
       success: false, 
-      error: `Script for '${toolName}' not found.`,
-      stderr: debugInfo 
+      error: `Script file '${fileName}' not found in /app/tools/` 
     });
   }
 
