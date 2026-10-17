@@ -12,11 +12,10 @@ export default function handler(req, res) {
     return res.status(400).json({ success: false, error: 'No tool prompt provided.' });
   }
 
-  // Navigate up one directory from 'dashboard' to reach root '/app/src/core/agent.ts'
+  // Path to src/core/agent.ts relative to the dashboard directory
   const coreScriptPath = path.resolve(process.cwd(), '..', 'src', 'core', 'agent.ts');
-
-  // Escape quotation marks in user prompt to safely pass as CLI argument
   const safePrompt = prompt.replace(/"/g, '\\"');
+  
   const command = `npx ts-node "${coreScriptPath}" "${safePrompt}"`;
 
   exec(command, (error, stdout, stderr) => {
