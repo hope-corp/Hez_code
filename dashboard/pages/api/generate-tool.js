@@ -24,9 +24,11 @@ export default function handler(req, res) {
       });
     }
 
+    const terminalOutput = stdout?.trim() || stderr?.trim() || `Agent successfully processed prompt: "${prompt}"`;
+
     res.json({
       success: true,
-      output: stdout || stderr || 'Agent executed successfully.'
+      output: terminalOutput
     });
   });
 }
