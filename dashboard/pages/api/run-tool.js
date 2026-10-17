@@ -17,12 +17,16 @@ export default function handler(req, res) {
 
   const fileName = scriptFiles[toolName];
   
-  // Check multiple possible locations inside the container
+  if (!fileName) {
+    return res.status(400).json({ success: false, error: 'Invalid tool selected.' });
+  }
+
+  // Check all possible locations inside the container environment
   const possiblePaths = [
-    path.resolve('/app/tools', fileName || ''),
-    path.resolve('/app/dashboard/tools', fileName || ''),
-    path.resolve(process.cwd(), 'tools', fileName || ''),
-    path.resolve(process.cwd(), '../tools', fileName || '')
+    path.resolve('/app/tools', fileName),
+    path.resolve('/app/Hez_code/tools', fileName),
+    path.resolve(process.cwd(), 'tools', fileName),
+    path.resolve(process.cwd(), '../tools', fileName)
   ];
 
   let targetScript = null;
@@ -34,7 +38,6 @@ export default function handler(req, res) {
   }
 
   if (!targetScript) {
-    // List what files DO exist in /app/tools if it exists
     let foundFiles = [];
     try {
       const toolsDir = path.resolve('/app/tools');
@@ -45,7 +48,7 @@ export default function handler(req, res) {
 
     return res.status(404).json({ 
       success: false, 
-      error: `Could not find '${fileName}'.`,
+      error: `Could not find script file '${fileName}'.`,
       availableFilesInTools: foundFiles,
       searchedPaths: possiblePaths
     });
