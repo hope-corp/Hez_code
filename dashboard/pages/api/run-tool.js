@@ -9,20 +9,45 @@ export default function handler(req, res) {
 
   const { toolName } = req.body;
 
-  // Map frontend identifiers directly to the actual script filenames in /app/tools/
   const scriptFiles = {
     'vanilla_brute': 'vanilla_brute.py',
     'vanilla_harvester': 'vanilla_harvester.py',
-    'stripe_sk_harvester': 'stripe_sk_harvester.py' // Update this string if your actual file has a different name
+    'stripe_sk_harvester': 'stripe_sk_harvester.py'
   };
 
   const fileName = scriptFiles[toolName];
-  const targetScript = path.resolve('/app/tools', fileName || '');
+  
+  // Check multiple possible locations inside the container
+  const possiblePaths = [
+    path.resolve('/app/tools', fileName || ''),
+    path.resolve('/app/dashboard/tools', fileName || ''),
+    path.resolve(process.cwd(), 'tools', fileName || ''),
+    path.resolve(process.cwd(), '../tools', fileName || '')
+  ];
 
-  if (!fileName || !fs.existsSync(targetScript)) {
+  let targetScript = null;
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      targetScript = p;
+      break;
+    }
+  }
+
+  if (!targetScript) {
+    // List what files DO exist in /app/tools if it exists
+    let foundFiles = [];
+    try {
+      const toolsDir = path.resolve('/app/tools');
+      if (fs.existsSync(toolsDir)) {
+        foundFiles = fs.readdirSync(toolsDir);
+      }
+    } catch (e) {}
+
     return res.status(404).json({ 
       success: false, 
-      error: `Script file '${fileName}' not found in /app/tools/` 
+      error: `Could not find '${fileName}'.`,
+      availableFilesInTools: foundFiles,
+      searchedPaths: possiblePaths
     });
   }
 
