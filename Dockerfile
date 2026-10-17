@@ -1,7 +1,7 @@
 FROM node:18-alpine
 
-# Install Python 3, pip, bash, and the requests library natively via Alpine
-RUN apk add --no-cache python3 py3-pip bash py3-requests
+# Install Python 3, pip, bash, requests, and beautifulsoup4 natively via Alpine
+RUN apk add --no-cache python3 py3-pip bash py3-requests py3-beautifulsoup4
 
 WORKDIR /app
 
