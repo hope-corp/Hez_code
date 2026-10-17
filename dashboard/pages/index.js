@@ -19,7 +19,14 @@ export default function Home() {
       const data = await res.json();
       
       if (data.success) {
-        setOutput(data.output || 'Tool executed successfully with no output.');
+        let terminalText = data.output || 'Tool executed successfully with no output.';
+        
+        // Catch and display contents of sk_keys.txt if the backend sent them
+        if (data.savedKeys) {
+          terminalText += `\n\n--- Contents of sk_keys.txt ---\n${data.savedKeys}`;
+        }
+        
+        setOutput(terminalText);
       } else {
         setOutput(`Error: ${data.error}\n${data.stderr || ''}`);
       }
